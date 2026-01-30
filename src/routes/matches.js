@@ -37,10 +37,13 @@ matchRouter.post('/', async (req, res) => {
         });
     }
 
-    const { startTime, endTime, homeScore, awayScore } = parsed.data;
+    const { sport, homeTeam, awayTeam, startTime, endTime, homeScore, awayScore } = parsed.data;
 
     try {
         const [event] = await db.insert(matches).values({
+            sport,
+            homeTeam,
+            awayTeam,
             startTime: new Date(startTime),
             endTime: new Date(endTime),
             homeScore: homeScore ?? 0,
@@ -51,7 +54,12 @@ matchRouter.post('/', async (req, res) => {
         res.status(201).json({ data: event });
 
     } catch (error) {
-        console.error('Error creating match:', error);
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Error creating match:', error);
+        } else {
+            console.error('Error creating match:', error.message);
+        }
+
         res.status(500).json({
             error: 'Failed to create a match.'
         });
