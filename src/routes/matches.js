@@ -41,7 +41,6 @@ matchRouter.post('/', async (req, res) => {
 
     try {
         const [event] = await db.insert(matches).values({
-            ...parsed.data,
             startTime: new Date(startTime),
             endTime: new Date(endTime),
             homeScore: homeScore ?? 0,
