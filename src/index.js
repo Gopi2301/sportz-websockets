@@ -1,5 +1,6 @@
 import express from 'express';
 import { db } from './db/db.js';
+import { matchRouter } from './routes/matches.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -7,8 +8,10 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Sports API is running' });
+  res.json({ status: 'ok', message: 'Sports API is running - VERSION 2' });
 });
+
+app.use('/matches', matchRouter);
 
 // Basic error handling
 app.use((err, req, res, next) => {
