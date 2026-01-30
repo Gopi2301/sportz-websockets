@@ -1,17 +1,21 @@
 import express from 'express';
+import { db } from './db/db.js';
 
 const app = express();
-const PORT = 8000;
+const PORT = process.env.PORT || 3000;
 
-// JSON middleware
 app.use(express.json());
 
-// Root route
-app.get('/', (req, res) => {
-  res.json({ message: 'Hello from Sportz!' });
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Sports API is running' });
 });
 
-// Start server and log URL
-const server = app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
+// Basic error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
