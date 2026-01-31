@@ -14,30 +14,47 @@ function broadcast(wss, payload) {
 }
 
 export function attachWebSocketServer(server) {
-    const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 1024 * 1024 });
-    wss.on('connection', async (socket, req) => {
+    const wss = new WebSocketServer({ noServer: true, path: '/ws', maxPayload: 1024 * 1024 });
+
+    server.on('upgrade', async (request, socket, head) => {
+        if (request.url !== '/ws') {
+            // Let other handlers handle it or close if exclusive
+            // For now passing through as path option in WSS handles it if we used handleUpgrade directly, 
+            // but since we are hijacking the event, we should be careful.
+            // However, typical pattern is to check path.
+            return;
+        }
 
         if (wsArcjet) {
             try {
-                const decision = await wsArcjet.protect(req);
-
+                const decision = await wsArcjet.protect(request);
                 if (decision.isDenied()) {
-                    const code = decision.reason.isRateLimit() ? 1013 : 1008;
-                    const reason = decision.reason.isRateLimit() ? 'Too many requests' : 'Forbidden';
-                    socket.close(code, reason);
+                    const code = decision.reason.isRateLimit() ? 429 : 403;
+                    const statusText = decision.reason.isRateLimit() ? 'Too Many Requests' : 'Forbidden';
+                    socket.write(`HTTP/1.1 ${code} ${statusText}\r\n\r\n`);
+                    socket.destroy();
                     return;
                 }
             } catch (error) {
-                console.error('WS connection error', error);
-                socket.close(1011, 'Internal Server Error');
+                console.error("Arcjet error", error);
+                socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+                socket.destroy();
+                return;
             }
         }
 
+        wss.handleUpgrade(request, socket, head, (ws) => {
+            wss.emit('connection', ws, request);
+        });
+    });
+
+    wss.on('connection', async (socket, req) => {
         socket.isAlive = true;
         socket.on('pong', () => { socket.isAlive = true; });
         sendJson(socket, { type: 'welcome' });
         socket.on('error', console.error);
     });
+
     const interval = setInterval(() => {
         wss.clients.forEach((ws) => {
             if (ws.isAlive === false) return ws.terminate();
