@@ -5,6 +5,7 @@ import { matchRouter } from './routes/matches.js';
 import http from 'http';
 import { attachWebSocketServer } from './ws/server.js';
 import { secuityMiddleware } from './arcject.js';
+import { commentaryRoutes } from './routes/commentary.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -26,6 +27,8 @@ app.get('/health', (req, res) => {
 app.use(secuityMiddleware());
 
 app.use('/matches', matchRouter);
+
+app.use('/matches/:id/commentary', commentaryRoutes);
 
 const { broadcastMatchCreated } = attachWebSocketServer(server);
 app.locals.broadcastMatchCreated = broadcastMatchCreated;
