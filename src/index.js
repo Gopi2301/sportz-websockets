@@ -1,8 +1,10 @@
+import 'dotenv/config';
 import express from 'express';
 import { db } from './db/db.js';
 import { matchRouter } from './routes/matches.js';
 import http from 'http';
 import { attachWebSocketServer } from './ws/server.js';
+import { secuityMiddleware } from './arcject.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -20,6 +22,8 @@ app.use((err, req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Sports API is running - VERSION 2' });
 });
+
+app.use(secuityMiddleware());
 
 app.use('/matches', matchRouter);
 
