@@ -31,7 +31,7 @@ export function secuityMiddleware() {
         try {
             const decision = await httpArcjet.protect(req);
             if (decision.isDenied()) {
-                if (decision.reason.isRateLimit) {
+                if (decision.reason.isRateLimit()) {
                     return res.status(429).json({ error: 'Too Many Requests' })
                 }
                 return res.status(403).json({ error: 'Forbidden.' })
